@@ -2,7 +2,7 @@ package onLatticeCA_jar;
 
 import HAL.GridsAndAgents.AgentGrid2D;
 import HAL.Gui.UIGrid;
-import HAL.Gui.GridWindow;
+// import HAL.Gui.GridWindow;
 import HAL.Interfaces.SerializableModel;
 import HAL.Rand;
 import HAL.Tools.FileIO;

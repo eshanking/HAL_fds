@@ -40,6 +40,14 @@ public class Model implements Runnable {
     String outDir = "./tmp/";
     @CommandLine.Option(names = { "--imageOutDir"}, description="Directory which to save images to.") 
     String imageOutDir = model.imageOutDir;
+    // ------------------------- Output - Visualisation -------------------------
+    @CommandLine.Option(names = { "--imageFrequency"}, description="Frequency at which an image of the tumour is saved. Negative number turns it off.") 
+    int imageFrequency = model.imageFrequency;
+    @CommandLine.Option(names = { "-visualiseB", "--visualiseB"}, description="Whether or not to show visualization.")
+    Boolean visualiseB = model.visualiseB;
+
+    @CommandLine.Option(names = { "--saveModelState"}, description="Whether or not to save the model object at the end of the simulation.") 
+    Boolean saveModelState = model.saveModelState;
     
     // ------------------------------------------------------------------------------------------------------------
     /*
@@ -85,15 +93,15 @@ public class Model implements Runnable {
                 if (nReplicates == 1) {
                     myModel.SetSeed(seed);
                 } else {
-                    myModel.SetSeed(replicateId, seed);
+                    myModel.SetSeed(replicateId);
                 }
             } else {
                 myModel.SetSeed(replicateId);
             }
 
             // Set the logging behaviour
-            myModel.SetExtraSimulationInfo(new String[]{"ReplicateId", "InitSize", "RFrac"},
-                    new double[]{replicateId, initialSizeProp, rFrac});
+            // myModel.SetExtraSimulationInfo(new String[]{"ReplicateId", "InitSize", "RFrac"},
+            //         new double[]{replicateId, initialSizeProp, rFrac});
             outFName = outDir + "RepId_" + replicateId + ".csv";
             if (imageFrequency > 0) {
                 myModel.visualiseB = true;
@@ -103,15 +111,16 @@ public class Model implements Runnable {
             }
 
             // Initialise the simulation
-            myModel.InitialiseCellLog(outFName, dt);
-            myModel.SetInitialState(initPopSizeArr, initialConditionType);
+            myModel.InitialiseCellLog(outFName);
+            // myModel.SetInitialState(initPopSizeArr, initialConditionType);
+            // myModel.InitTumor(initRadius, rFrac);
 
 
         // Run the simulation
-        myModel.SetTreatmentSchedule(treatmentScheduleList);
+        // myModel.SetTreatmentSchedule(treatmentScheduleList);
         myModel.Run();
         myModel.Close();
-        if (saveModelState) {myModel.SaveModelState(currSavedModelFileName);}
+        // if (saveModelState) {myModel.SaveModelState(currSavedModelFileName);}
         }
     }
 
