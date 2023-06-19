@@ -36,6 +36,19 @@ public class Model implements Runnable {
     // double dt = model.dt;
     // @CommandLine.Option(names = { "-treatmentScheduleList", "--treatmentScheduleList"}, description="Treatment schedule in format {{tStart, tEnd, drugConcentration}}.") 
     // String treatmentScheduleList_string;
+    @CommandLine.Option(names = { "-nTSteps", "--nTSteps"}, description="Number of time steps to run for.")
+    int nTSteps = model.nTSteps;
+    @CommandLine.Option(names = { "-localFreq", "--localFreq"}, description="Calculate frequency-dependent interactions locally (in a Moore neighbourhood)")
+    double localFreq = model.localFreq ? 1 : 0;
+    // ------------------------- Cell Properties -------------------------
+    @CommandLine.Option(names = { "-wtDP", "--wtDivProb"}, description="Wild-type division probability")
+    double wtDivProb = model.wtDivProb;
+    @CommandLine.Option(names = { "-resDP", "--resDivProb"}, description="Resistant division probability")
+    double resDivProb = model.resDivProb;
+    @CommandLine.Option(names = { "-dieProb", "--dieProb"}, description="Probability of cell death")
+    double dieProb = model.dieProb;
+    @CommandLine.Option(names = { "-gain", "--gain"}, description="Modifies the slope of the frequency-dependent gain function")
+    double gain = model.gain;
     // ------------------------- Output - Text -------------------------
     @CommandLine.Option(names = { "--outDir"}, description="Directory which to save output files to.") 
     String outDir = "./tmp/";
@@ -87,7 +100,9 @@ public class Model implements Runnable {
             // Set up the simulation
             // paramArr = new double[]{divisionRate_S, divisionRate_R, movementRate_S, movementRate_R,
             //         deathRate_S, deathRate_R, drugEffect_div_S, drugEffect_div_R};
-            myModel = new Grid(xDim, yDim);
+            
+            paramArr = new double[]{wtDivProb,resDivProb,gain,nTSteps,dieProb,localFreq};
+            myModel = new Grid(xDim, yDim, paramArr);
 
             // Set the random number seed. Behaviour depends no whether this is a single run or part of a series of nReplicate runs. By default will assign every replicate the value ```seed=replicateId```
             if (seed != -1) {

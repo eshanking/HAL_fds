@@ -37,14 +37,29 @@ class Model():
                                # -------------------- Output - Text --------------------
                             #    "verboseLevel": 0, "printFrequency": 100, # Command line verbosity. This goes to stdout.
                             #    "logCellCountFrequency": 1, # Frequency (in time units) at which the cell counts are written to file. <0 indicates no logging.
-                               "outDir": "./tmp/", # Directory which to save output files to.
+                            #    "outDir": "./tmp/", # Directory which to save output files to.
                                # -------------------- Output - Visualisation --------------------
                                # TODO: Clean up how visualisation are managed (and headless vs visualiseB stuff)
                             #    "headless": True, # Whether to show graphics window. Want this off to run on cluster etc
                             #    "visualiseB": False, # Whether to generate visualisation. Turn off for speed increase.
                             #    "scaleFactor": 2, "pause": 0, # Visualsation configs
-                               "initialRadius": 10,
-                               "imageOutDir": "./tmp/", "imageFrequency": -1, # Saving of simulation images. Negative freq turns it off.") 
+                            "initialRadius": 10,
+                            "pResistant":0.1,
+                            "nTSteps":1000,
+                            "localFreq":1,
+                            "wtDivProb":0.2,
+                            "resDivProb":0.15,
+                            "dieProb":0.01,
+                            "gain":1,
+                            "outDir":"./tmp/",
+                            "imageOutDir":"./tmp/",
+                            "imageFrequency":-1,
+                            "saveModelState":False,
+                            "visaualiseB":False
+
+
+
+                            #    "imageOutDir": "./tmp/", "imageFrequency": -1, # Saving of simulation images. Negative freq turns it off.") 
                                # -------------------- Output - Model File --------------------
                                # TODO: Get this implemented
                             #    "saveModelState": False, # Whether or not to save the model object at the end of the simulation.
@@ -91,9 +106,10 @@ class Model():
         argStr = " "
         for var in self.modelConfigDic.keys():
             if self.modelConfigDic[var] is None: continue # For vars set to None use default vals from java side
-            if var in ["cost", "turnover"]: continue # Certain parameters are only used in the wrapper and not passed to java
+            # if var in ["cost", "turnover"]: continue # Certain parameters are only used in the wrapper and not passed to java
             if isinstance(self.modelConfigDic[var], bool): 
-                if self.modelConfigDic[var]: argStr += "--%s " % (var)
+                if self.modelConfigDic[var]: 
+                    argStr += "--%s " % (var)
             else:
                 argStr += "--%s %s " % (var, self.modelConfigDic[var])
         if printCommand: print("java -jar %s" % self.jarFileName + argStr)

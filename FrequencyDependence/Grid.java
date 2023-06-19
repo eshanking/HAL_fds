@@ -66,27 +66,27 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
         }
     }
 
-    public void StepCell(double dieProb){
-        if(G.rng.Double()<dieProb){
-            Dispose();
-            if (this.resistance == 1){
-                G.countResistant--;
-            }
-            return;
-        }
-        double divProb=FreqDepFitness();
-        if(G.rng.Double()<divProb){
-            int options=MapEmptyHood(G.divHood);
-            if(options>0){
-                int iDaughter=G.divHood[G.rng.Int(options)];
-                G.NewAgentSQ(iDaughter).resistance = this.resistance;
-                if (this.resistance == 1){
-                    G.countResistant++;
-                }
-                // daughter.StepCell(dieProb);
-            }
-        }
-    }
+    // public void StepCell(double dieProb){
+    //     if(G.rng.Double()<dieProb){
+    //         Dispose();
+    //         if (this.resistance == 1){
+    //             G.countResistant--;
+    //         }
+    //         return;
+    //     }
+    //     double divProb=FreqDepFitness();
+    //     if(G.rng.Double()<divProb){
+    //         int options=MapEmptyHood(G.divHood);
+    //         if(options>0){
+    //             int iDaughter=G.divHood[G.rng.Int(options)];
+    //             G.NewAgentSQ(iDaughter).resistance = this.resistance;
+    //             if (this.resistance == 1){
+    //                 G.countResistant++;
+    //             }
+    //             // daughter.StepCell(dieProb);
+    //         }
+    //     }
+    // }
 
 }
 
@@ -132,6 +132,11 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
         super(100,100,Cell.class);
     }
 
+    public Grid(int x, int y , double[] paramArr){
+        super(x,y,Cell.class);
+        SetParameters(paramArr);
+    }
+
     // Function used as part of SerializableModel to allow saving the model's state so that I can restart
     // the simulation exactly where I left off at the end of the last treatment interval.
     @Override
@@ -156,30 +161,43 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
         this.imageFrequency = imageFrequency;
     }
 
-    // public void SetSeed(int seed_Simulation, int seed_ICs) {
-    //     this.rng = new Rand(seed_Simulation);
-    //     // this.rn_ICs = new Rand(seed_ICs);
-    // }
-
-    // public Grid(int x, int y, double[] paramArr) {
-    //     super(x, y, Cell.class);
-    //     SetParameters(paramArr);
-    // }
-
-    // public void SetParameters(double[] paramArr) {
-    //     this.divisionRate_S = paramArr[0];
-    //     this.divisionRate_R = paramArr[1];
-    //     this.movementRate_S = paramArr[2];
-    //     this.movementRate_R = paramArr[3];
-    //     this.deathRate_S = paramArr[4];
-    //     this.deathRate_R = paramArr[5];
-    //     this.drugEffect_div_S = paramArr[6];
-    //     this.drugEffect_div_R = paramArr[7];
-    // }
-
     public void StepCells() {
+        int currPos;
+
         for (Cell cell : this) {
-            cell.StepCell(dieProb);
+            // cell.StepCell(dieProb);
+            if (rng.Double() < dieProb){
+                cell.Dispose();
+                currPos = cell.Isq();
+                vis.SetPix(currPos, BLACK);
+                if (cell.resistance == 1){
+                    countResistant--;
+                }    
+            }
+            else{
+                double divProb = cell.FreqDepFitness();
+                
+                if (rng.Double() < divProb) {
+                    int options = MapEmptyHood(divHood, cell.Xsq(), cell.Ysq());
+                    if (options > 0) {
+                        // if (tIdx%10==0){
+                        //     System.out.println("tStep: " + String.valueOf(tIdx));
+                        //     System.out.println("divProb: " + String.valueOf(divProb));
+                        // }
+                        // System.out.println("tStep: " + String.valueOf(tIdx));
+                        // System.out.println("divProb: " + String.valueOf(divProb));
+                        int iDaughter = divHood[rng.Int(options)];
+                        Cell daughter = NewAgentSQ(iDaughter);
+                        daughter.resistance = cell.resistance;
+                        daughter.Draw();
+                        if (daughter.resistance == 1){
+                            countResistant++;
+                        }
+                    }
+                }
+
+            }
+            
         }
     }
 
@@ -213,8 +231,8 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
         int timesteps=500;
         // double dieProb=0.01;
     
-        GridWindow win=new GridWindow(x,y,10);
-        Grid model=new Grid(x,y);
+        GridWindow win = new GridWindow(x,y,10);
+        Grid model = new Grid(x,y);
 
         // initialize model
         // model.NewAgentSQ(model.xDim/2,model.yDim/2);
@@ -244,6 +262,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
         for (int i = 0; i < hoodSize; i++) {
             if (rng.Double() < resistantProb) {
                 NewAgentSQ(tumorNeighborhood[i]).resistance = 1;
+                countResistant++;
             } else {
                 NewAgentSQ(tumorNeighborhood[i]).resistance = 0;
             }
@@ -252,6 +271,9 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
 
     public void Run() {
         // Initialise visualisation window
+        
+        // System.out.println("Die Prob: " + String.valueOf(dieProb));
+
         UIGrid currVis = new UIGrid(xDim, yDim, scaleFactor, visualiseB); // For head-less run
         this.vis = currVis;
         // Comment out next line if want to run with viz on in vscode xxx
@@ -269,6 +291,10 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
             // PrintStatus(0);
             InitTumor(initRadius, initResistantProp);
             if (cellCountLogFile==null && cellCountLogFileName!=null) {InitialiseCellLog(this.cellCountLogFileName);}
+
+            for (Cell c : this) {
+                c.Draw();
+            }
             SaveCurrentCellCount(0);
             SaveTumourImage(tIdx);
             tIdx = 1;
@@ -363,6 +389,27 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     //         for (int i=0; i<outputArr.length; i++) {for (int j=0; j<outputArr[0].length; j++) {outputArr[i][j] = 0;}}
     //     }
     // }
+
+    public void SetParameters(double[] paramArr){
+        this.wtDivProb = paramArr[0];
+        this.resDivProb = paramArr[1];
+        this.gain = paramArr[2];
+        this.slope = (wtDivProb - resDivProb)*gain;
+        // this.initRadius = paramArr[3];
+        // this.initResistantProp = paramArr[4];
+        this.nTSteps = (int) paramArr[3];
+        this.dieProb = paramArr[4];
+        this.localFreq = (paramArr[5] == 1);
+        // this.seed = (int) paramArr[8];
+        // this.imageFrequency = (int) paramArr[9];
+        // this.pause = (int) paramArr[10];
+        // this.saveModelState = (paramArr[11] == 1);
+    }
+
+    public void SetInitialState(double initRadius, double initResistantProp) {
+        this.initRadius = initRadius;
+        this.initResistantProp = initResistantProp;
+    }
 
     private void WriteLogFileHeader() {
         // cellCountLogFile.Write("TIdx,Time,NCells_S,NCells_R,NCells,DrugConcentration,rS,rR,mS,mR,dS,dR,dD_div_S,dD_div_R,dt");
