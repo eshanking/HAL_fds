@@ -1,11 +1,12 @@
 package FrequencyDependence;
 
 import HAL.lib.CommandLine;
-import onLatticeCA_jar.OnLatticeGrid;
-import onLatticeCA_jar.OnLatticeModel;
+// import onLatticeCA_jar.OnLatticeGrid;
+// import onLatticeCA_jar.OnLatticeModel;
+// import FrequencyDependence.Grid;
 
 import java.io.File;
-import static HAL.Util.LoadState;
+// import static HAL.Util.LoadState;
 
 @CommandLine.Command(name = "2-D Agent-Based Model of Frequency-Dependent Tumor Growth",
         mixinStandardHelpOptions = true,
@@ -125,7 +126,7 @@ public class Model implements Runnable {
     }
 
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new OnLatticeModel()).execute(args); 
+        int exitCode = new CommandLine(new Model()).execute(args); 
         System.exit(exitCode);
     }
 }

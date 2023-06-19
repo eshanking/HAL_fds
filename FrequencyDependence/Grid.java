@@ -112,7 +112,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     int pause = 1;
 
     FileIO cellCountLogFile = null;
-    String cellCountLogFileName;
+    String cellCountLogFileName = "data/cellCountLog/";
     double logCellCountFrequency = 1;
     int tIdx = 0;
     boolean saveModelState = false;
