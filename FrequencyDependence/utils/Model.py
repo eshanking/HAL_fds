@@ -46,6 +46,7 @@ class Model():
                             "initialRadius": 10,
                             "pResistant":0.1,
                             "nTSteps":1000,
+                            "nReplicates": 1,
                             "localFreq":1,
                             "wtDivProb":0.2,
                             "resDivProb":0.15,

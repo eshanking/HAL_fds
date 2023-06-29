@@ -118,6 +118,7 @@ public class Model implements Runnable {
             // Set the logging behaviour
             // myModel.SetExtraSimulationInfo(new String[]{"ReplicateId", "InitSize", "RFrac"},
             //         new double[]{replicateId, initialSizeProp, rFrac});
+            System.out.println(imageOutDir);
             outFName = outDir + "RepId_" + replicateId + ".csv";
             if (imageFrequency > 0) {
                 myModel.visualiseB = true;

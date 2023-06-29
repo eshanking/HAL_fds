@@ -108,7 +108,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
 
     boolean visualiseB = true;
     public String imageOutDir = "data/images/";
-    int imageFrequency = 10;
+    int imageFrequency = -1;
     int pause = 1;
 
     FileIO cellCountLogFile = null;
