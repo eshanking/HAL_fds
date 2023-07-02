@@ -10,23 +10,10 @@ import HAL.Tools.FileIO;
 import HAL.Gui.UIGrid;
 import HAL.Interfaces.SerializableModel;
 
-import static HAL.Util.SaveState;
-
 class Cell extends AgentSQ2Dunstackable<Grid> {
     int resistance; // 0 = sensitive, 1 = resistant
-
-    // public float GetNeighborhood() {
-    //     // get the proportion of cells of the same type in the neighborhood
-    //     int hood = G.MapOccupiedHood(G.divHood, Xsq(), Ysq());
-    //     int count = 0;
-    //     for (int i = 0; i < hood; i++) {
-    //         Cell other = G.GetAgent(G.divHood[i]);
-    //         if (other != null && other.type == type) {
-    //             count++;
-    //         }
-    //     }
-    //     return (float) count / hood;
-    // }
+    double alpha;
+    double beta;
 
     void Draw(){
         G.vis.SetPix(Isq(), (resistance==0)? Util.RGB256(91, 123, 214): Util.RGB256(228, 234, 76));
@@ -53,40 +40,24 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
             return (float) count / hood;
         }
     }
-
+    
+    public double fdsModel(double frac, double g_100) {
+        double g_0 = (g_100 * (1 + alpha) + beta); // Maximally moderated growth (0% frac)
+        double g_frac = frac * g_100 + (1 - frac) * g_0; // Growth rate (fraction)
+        return g_frac;
+    }
 
     public double FreqDepFitness(){
         // returns the fitness as a function of cell type and local frequency
         
         if (this.resistance == 1) {
             float freq = GetNeighborhood();
-            return (G.slope)*(1-freq) + G.resDivProb;
+            // return (G.slope)*(1-freq) + G.resDivProb;
+            return fdsModel(freq, G.resDivProb);
         } else {
             return G.wtDivProb;
         }
     }
-
-    // public void StepCell(double dieProb){
-    //     if(G.rng.Double()<dieProb){
-    //         Dispose();
-    //         if (this.resistance == 1){
-    //             G.countResistant--;
-    //         }
-    //         return;
-    //     }
-    //     double divProb=FreqDepFitness();
-    //     if(G.rng.Double()<divProb){
-    //         int options=MapEmptyHood(G.divHood);
-    //         if(options>0){
-    //             int iDaughter=G.divHood[G.rng.Int(options)];
-    //             G.NewAgentSQ(iDaughter).resistance = this.resistance;
-    //             if (this.resistance == 1){
-    //                 G.countResistant++;
-    //             }
-    //             // daughter.StepCell(dieProb);
-    //         }
-    //     }
-    // }
 
 }
 
@@ -105,6 +76,9 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     public int nReplicates = 1;
     int nTSteps = 1000;
     double dieProb = 0.01;
+
+    double[] resGameParams = new double[]{0.1727,-0.0033}; // alpha, beta for BRAF/parental game
+    double[] wtGameParams = new double[]{-0.0783,0.0082}; // alpha, beta for BRAF/parental game
 
     boolean visualiseB = true;
     public String imageOutDir = "data/images/";
@@ -180,15 +154,18 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
                 if (rng.Double() < divProb) {
                     int options = MapEmptyHood(divHood, cell.Xsq(), cell.Ysq());
                     if (options > 0) {
-                        // if (tIdx%10==0){
-                        //     System.out.println("tStep: " + String.valueOf(tIdx));
-                        //     System.out.println("divProb: " + String.valueOf(divProb));
-                        // }
-                        // System.out.println("tStep: " + String.valueOf(tIdx));
-                        // System.out.println("divProb: " + String.valueOf(divProb));
+
                         int iDaughter = divHood[rng.Int(options)];
                         Cell daughter = NewAgentSQ(iDaughter);
                         daughter.resistance = cell.resistance;
+                        if (daughter.resistance == 1){
+                            daughter.alpha = resGameParams[0];
+                            daughter.beta = resGameParams[1];
+                        }
+                        else{
+                            daughter.alpha = wtGameParams[0];
+                            daughter.beta = wtGameParams[1];
+                        }
                         daughter.Draw();
                         if (daughter.resistance == 1){
                             countResistant++;
@@ -255,16 +232,39 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
             
         }
     }
+    // public void InitTumor(double radius, double resistantProb) {
+    //     //get a list of indices that fill a circle at the center of the grid
+    //     int[] tumorNeighborhood = CircleHood(true, radius);
+    //     int hoodSize = MapHood(tumorNeighborhood, xDim / 2, yDim / 2);
+    //     for (int i = 0; i < hoodSize; i++) {
+    //         if (rng.Double() < resistantProb) {
+    //             NewAgentSQ(tumorNeighborhood[i]).resistance = 1;
+    //             // assign alpha and beta
+
+    //             countResistant++;
+    //         } else {
+    //             NewAgentSQ(tumorNeighborhood[i]).resistance = 0;
+    //         }
+    //     }
+    // }
+
     public void InitTumor(double radius, double resistantProb) {
         //get a list of indices that fill a circle at the center of the grid
         int[] tumorNeighborhood = CircleHood(true, radius);
         int hoodSize = MapHood(tumorNeighborhood, xDim / 2, yDim / 2);
         for (int i = 0; i < hoodSize; i++) {
+            Cell c = NewAgentSQ(tumorNeighborhood[i]);
             if (rng.Double() < resistantProb) {
-                NewAgentSQ(tumorNeighborhood[i]).resistance = 1;
+                c.resistance = 1;
+                // assign alpha and beta
+                c.alpha = resGameParams[0];
+                c.beta = resGameParams[1];
                 countResistant++;
             } else {
-                NewAgentSQ(tumorNeighborhood[i]).resistance = 0;
+                c.resistance = 0;
+                // assign alpha and beta
+                c.alpha = wtGameParams[0];
+                c.beta = wtGameParams[1];
             }
         }
     }
