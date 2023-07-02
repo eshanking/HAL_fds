@@ -47,8 +47,6 @@ public class Model implements Runnable {
     double resDivProb = model.resDivProb;
     @CommandLine.Option(names = { "-dieProb", "--dieProb"}, description="Probability of cell death")
     double dieProb = model.dieProb;
-    @CommandLine.Option(names = { "-gain", "--gain"}, description="Modifies the slope of the frequency-dependent gain function")
-    double gain = model.gain;
     // ------------------------- Output - Text -------------------------
     @CommandLine.Option(names = { "--outDir"}, description="Directory which to save output files to.") 
     String outDir = "./tmp/";
@@ -101,7 +99,7 @@ public class Model implements Runnable {
             // paramArr = new double[]{divisionRate_S, divisionRate_R, movementRate_S, movementRate_R,
             //         deathRate_S, deathRate_R, drugEffect_div_S, drugEffect_div_R};
             
-            paramArr = new double[]{wtDivProb,resDivProb,gain,nTSteps,dieProb,localFreq};
+            paramArr = new double[]{wtDivProb,resDivProb,nTSteps,dieProb,localFreq};
             myModel = new Grid(xDim, yDim, paramArr);
 
             // Set the random number seed. Behaviour depends no whether this is a single run or part of a series of nReplicate runs. By default will assign every replicate the value ```seed=replicateId```

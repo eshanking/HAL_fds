@@ -44,14 +44,13 @@ class Model():
                             #    "visualiseB": False, # Whether to generate visualisation. Turn off for speed increase.
                             #    "scaleFactor": 2, "pause": 0, # Visualsation configs
                             "initialRadius": 10,
-                            "pResistant":0.1,
+                            # "pResistant":0.1,
                             "nTSteps":1000,
                             "nReplicates": 1,
                             "localFreq":1,
-                            "wtDivProb":0.2,
-                            "resDivProb":0.15,
-                            "dieProb":0.01,
-                            "gain":1,
+                            "wtDivProb":0.033,
+                            "resDivProb":0.028,
+                            "dieProb":0.005,
                             "outDir":"./tmp/",
                             "imageOutDir":"./tmp/",
                             "imageFrequency":-1,

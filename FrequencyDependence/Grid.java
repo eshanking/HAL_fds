@@ -14,6 +14,7 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
     int resistance; // 0 = sensitive, 1 = resistant
     double alpha;
     double beta;
+    double divProb;
 
     void Draw(){
         G.vis.SetPix(Isq(), (resistance==0)? Util.RGB256(91, 123, 214): Util.RGB256(228, 234, 76));
@@ -29,10 +30,10 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
                 return (float) (G.Pop() - G.countResistant) / G.Pop();
             }
         } else { // calculate the local frequency
-            int hood = G.MapOccupiedHood(G.divHood, Xsq(), Ysq());
+            int hood = G.MapOccupiedHood(G.freqHood, Xsq(), Ysq());
             int count = 0;
             for (int i = 0; i < hood; i++) {
-                Cell other = G.GetAgent(G.divHood[i]);
+                Cell other = G.GetAgent(G.freqHood[i]);
                 if (other != null && other.resistance == this.resistance) {
                     count++;
                 }
@@ -49,14 +50,8 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
 
     public double FreqDepFitness(){
         // returns the fitness as a function of cell type and local frequency
-        
-        if (this.resistance == 1) {
-            float freq = GetNeighborhood();
-            // return (G.slope)*(1-freq) + G.resDivProb;
-            return fdsModel(freq, G.resDivProb);
-        } else {
-            return G.wtDivProb;
-        }
+        float freq = GetNeighborhood();
+        return fdsModel(freq, divProb);        
     }
 
 }
@@ -64,11 +59,12 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
 public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
 
     int[] divHood = Util.VonNeumannHood(false);
+    int[] freqHood = Util.VonNeumannHood(true); // include the current cell when calculating the local frequency 
     public final static int RESISTANT = RGB(1, 1, 0), SENSITIVE = RGB(0, 0, 1);
     public boolean localFreq = false;
     public int countResistant;
-    public double wtDivProb = 0.68; // per hour
-    public double resDivProb = 0.67;
+    public double wtDivProb = 0.033; // per hour
+    public double resDivProb = 0.028;
     // public double gain = 1;
     // public double slope = (wtDivProb - resDivProb)*gain;
     public double initRadius = 10;
@@ -77,8 +73,8 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     int nTSteps = 1000;
     double dieProb = 0.01;
 
-    double[] resGameParams = new double[]{0.1727,-0.0033}; // alpha, beta for BRAF/parental game
-    double[] wtGameParams = new double[]{-0.0783,0.0082}; // alpha, beta for BRAF/parental game
+    double[] resGameParams = new double[]{0.1727,-0.00083}; // alpha, beta for BRAF/parental game
+    double[] wtGameParams = new double[]{-0.0783,0.0020}; // alpha, beta for BRAF/parental game
 
     boolean visualiseB = true;
     public String imageOutDir = "data/images/";
@@ -161,10 +157,12 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
                         if (daughter.resistance == 1){
                             daughter.alpha = resGameParams[0];
                             daughter.beta = resGameParams[1];
+                            daughter.divProb = resDivProb;
                         }
                         else{
                             daughter.alpha = wtGameParams[0];
                             daughter.beta = wtGameParams[1];
+                            daughter.divProb = wtDivProb;
                         }
                         daughter.Draw();
                         if (daughter.resistance == 1){
@@ -393,13 +391,13 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     public void SetParameters(double[] paramArr){
         this.wtDivProb = paramArr[0];
         this.resDivProb = paramArr[1];
-        this.gain = paramArr[2];
-        this.slope = (wtDivProb - resDivProb)*gain;
+        // this.gain = paramArr[2];
+        // this.slope = (wtDivProb - resDivProb)*gain;
         // this.initRadius = paramArr[3];
         // this.initResistantProp = paramArr[4];
-        this.nTSteps = (int) paramArr[3];
-        this.dieProb = paramArr[4];
-        this.localFreq = (paramArr[5] == 1);
+        this.nTSteps = (int) paramArr[2];
+        this.dieProb = paramArr[3];
+        this.localFreq = (paramArr[4] == 1);
         // this.seed = (int) paramArr[8];
         // this.imageFrequency = (int) paramArr[9];
         // this.pause = (int) paramArr[10];
