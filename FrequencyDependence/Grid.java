@@ -67,10 +67,10 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     public final static int RESISTANT = RGB(1, 1, 0), SENSITIVE = RGB(0, 0, 1);
     public boolean localFreq = false;
     public int countResistant;
-    public double wtDivProb = 0.2;
-    public double resDivProb = 0.15;
-    public double gain = 1;
-    public double slope = (wtDivProb - resDivProb)*gain;
+    public double wtDivProb = 0.68; // per hour
+    public double resDivProb = 0.67;
+    // public double gain = 1;
+    // public double slope = (wtDivProb - resDivProb)*gain;
     public double initRadius = 10;
     public double initResistantProp = 0.1;
     public int nReplicates = 1;
