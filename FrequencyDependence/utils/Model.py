@@ -26,7 +26,7 @@ class Model():
                                "pResistant": 0.05, # Initial resistance fraction in [0,1]
                             #    "initialConditionType": "random", # Seeding architecture ("random" or "circle")
                             #    "tEnd": 5, # End time in days
-                            #    "dt": 1, # Time step in days
+                               "dt": 1, # Time step in days
                             #    "treatmentScheduleList": None, # Treatment schedule in format [[tStart, tEnd, drugConcentration]]
                                # -------------------- Cell Properties --------------------
                             #    "divisionRate_S": 0.027, "divisionRate_R": 0.027, # Proliferation rate of cells in d^-1.
@@ -44,6 +44,10 @@ class Model():
                             #    "visualiseB": False, # Whether to generate visualisation. Turn off for speed increase.
                             #    "scaleFactor": 2, "pause": 0, # Visualsation configs
                             "initialRadius": 10,
+                            "wtAlpha":-0.0783,
+                            "resAlpha":0.1727,
+                            "wtBeta":0.0020,
+                            "resBeta":-0.00083,
                             # "pResistant":0.1,
                             "nTSteps":1000,
                             "nReplicates": 1,

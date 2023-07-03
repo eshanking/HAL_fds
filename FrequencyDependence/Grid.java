@@ -139,12 +139,29 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
         this.imageFrequency = imageFrequency;
     }
 
+    public void ConfigureInitialTumour(double initRadius, double initResistantProp) {
+        /*
+        * Configure initial tumour size and composition.
+        */
+        this.initRadius = initRadius;
+        this.initResistantProp = initResistantProp;
+    }
+
+    public void ConfigureGameParams(double[] wtGameParams, double[] resGameParams) {
+        /*
+        * Configure game parameters.
+        */
+        this.resGameParams = resGameParams;
+        this.wtGameParams = wtGameParams;
+    }
+
     public void StepCells() {
         int currPos;
 
         for (Cell cell : this) {
+            
             // cell.StepCell(dieProb);
-            if (rng.Double() < dieProb){
+            if (rng.Double() < dieProb * dt){
                 cell.Dispose();
                 currPos = cell.Isq();
                 vis.SetPix(currPos, BLACK);
@@ -153,7 +170,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
                 }    
             }
             else{
-                double divProb = cell.FreqDepFitness();
+                double divProb = cell.FreqDepFitness() * dt;
                 
                 if (rng.Double() < divProb) {
                     int options = MapEmptyHood(divHood, cell.Xsq(), cell.Ysq());
@@ -161,7 +178,9 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
 
                         int iDaughter = divHood[rng.Int(options)];
                         Cell daughter = NewAgentSQ(iDaughter);
+                        
                         daughter.resistance = cell.resistance;
+                        
                         if (daughter.resistance == 1){
                             daughter.alpha = resGameParams[0];
                             daughter.beta = resGameParams[1];
@@ -178,9 +197,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
                         }
                     }
                 }
-
             }
-            
         }
     }
 
@@ -262,12 +279,14 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
             Cell c = NewAgentSQ(tumorNeighborhood[i]);
             if (rng.Double() < resistantProb) {
                 c.resistance = 1;
+                c.divProb = resDivProb;
                 // assign alpha and beta
                 c.alpha = resGameParams[0];
                 c.beta = resGameParams[1];
                 countResistant++;
             } else {
                 c.resistance = 0;
+                c.divProb = wtDivProb;
                 // assign alpha and beta
                 c.alpha = wtGameParams[0];
                 c.beta = wtGameParams[1];
@@ -276,10 +295,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     }
 
     public void Run() {
-        // Initialise visualisation window
-        
-        // System.out.println("Die Prob: " + String.valueOf(dieProb));
-
+    // Initialise visualisation window
         UIGrid currVis = new UIGrid(xDim, yDim, scaleFactor, visualiseB); // For head-less run
         this.vis = currVis;
         // Comment out next line if want to run with viz on in vscode xxx
@@ -385,17 +401,17 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
             // compute wildtype fitness
             double wtFitness = c.fdsModel(1-resFreq, wtDivProb, wtGameParams[0], wtGameParams[1]);
 
-            return new double[] {tIdx, tIdx*dt, Pop()-countResistant, countResistant, Pop(),dt,
+            return new double[] {tIdx, tIdx*dt, Pop()-countResistant, countResistant, Pop(),
             resFreq, resFitness, wtFitness};
         }
         else{
-            return new double[] {tIdx, tIdx*dt, Pop()-countResistant, countResistant, Pop(),dt};
+            return new double[] {tIdx, tIdx*dt, Pop()-countResistant, countResistant, Pop()};
         }
     }
 
     public void SaveTumourImage(int currTimeIdx) {
-        if (imageFrequency > 0 && (currTimeIdx % (int) (imageFrequency)) == 0) {
-            this.vis.ToPNG(imageOutDir +"/img_t_"+currTimeIdx+".png");
+        if (imageFrequency > 0 && (currTimeIdx % (int) (imageFrequency/dt)) == 0) {
+            this.vis.ToPNG(imageOutDir +"/img_t_"+currTimeIdx*dt+".png");
         }
     }
     // public void InitialiseCellLog(String cellCountLogFileName) {
@@ -443,7 +459,13 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
 
     private void WriteLogFileHeader() {
         // cellCountLogFile.Write("TIdx,Time,NCells_S,NCells_R,NCells,DrugConcentration,rS,rR,mS,mR,dS,dR,dD_div_S,dD_div_R,dt");
-        cellCountLogFile.Write("TIdx,Time,NCells_S,NCells_R,NCells");
+        if (localFreq == false){
+            cellCountLogFile.Write("TIdx,Time,NCells_S,NCells_R,NCells,ResFreq,ResFitness,WtFitness");
+        }
+        else{
+            cellCountLogFile.Write("TIdx,Time,NCells_S,NCells_R,NCells");
+        }
+        // cellCountLogFile.Write("TIdx,Time,NCells_S,NCells_R,NCells");
         // if (extraSimulationInfoNames!=null) {
         //     cellCountLogFile.Write(",");
         //     cellCountLogFile.WriteDelimit(extraSimulationInfoNames, ",");

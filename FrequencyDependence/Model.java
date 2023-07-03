@@ -47,6 +47,14 @@ public class Model implements Runnable {
     double resDivProb = model.resDivProb;
     @CommandLine.Option(names = { "-dieProb", "--dieProb"}, description="Probability of cell death")
     double dieProb = model.dieProb;
+    @CommandLine.Option(names = { "-wtAlpha", "--wtAlpha"}, description="wild-type alpha parameter")
+    double wtAlpha = model.wtGameParams[0];
+    @CommandLine.Option(names = { "-wtBeta", "--wtBeta"}, description="wild-type beta parameter")
+    double wtBeta = model.wtGameParams[1];
+    @CommandLine.Option(names = { "-resAlpha", "--resAlpha"}, description="resistant alpha parameter")
+    double resAlpha = model.resGameParams[0];
+    @CommandLine.Option(names = { "-resBeta", "--resBeta"}, description="resistant beta parameter")
+    double resBeta = model.resGameParams[1];
     // ------------------------- Output - Text -------------------------
     @CommandLine.Option(names = { "--outDir"}, description="Directory which to save output files to.") 
     String outDir = "./tmp/";
@@ -116,7 +124,7 @@ public class Model implements Runnable {
             // Set the logging behaviour
             // myModel.SetExtraSimulationInfo(new String[]{"ReplicateId", "InitSize", "RFrac"},
             //         new double[]{replicateId, initialSizeProp, rFrac});
-            System.out.println(imageOutDir);
+            // System.out.println(imageOutDir);
             outFName = outDir + "RepId_" + replicateId + ".csv";
             if (imageFrequency > 0) {
                 myModel.visualiseB = true;
@@ -133,6 +141,8 @@ public class Model implements Runnable {
 
         // Run the simulation
         // myModel.SetTreatmentSchedule(treatmentScheduleList);
+        myModel.ConfigureInitialTumour(initRadius, rFrac);
+        myModel.ConfigureGameParams(new double[] {wtAlpha,wtBeta}, new double[] {resAlpha,resBeta});
         myModel.Run();
         myModel.Close();
         // if (saveModelState) {myModel.SaveModelState(currSavedModelFileName);}
