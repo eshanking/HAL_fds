@@ -32,8 +32,8 @@ public class Model implements Runnable {
     double rFrac = model.initResistantProp;
     // @CommandLine.Option(names = { "-tEnd", "--tEnd"}, description="End time in days.") 
     // double tEnd = model.tEnd;
-    // @CommandLine.Option(names = { "-dt", "--dt"}, description="Time step in days.") 
-    // double dt = model.dt;
+    @CommandLine.Option(names = { "-dt", "--dt"}, description="Time step in days.") 
+    double dt = model.dt;
     // @CommandLine.Option(names = { "-treatmentScheduleList", "--treatmentScheduleList"}, description="Treatment schedule in format {{tStart, tEnd, drugConcentration}}.") 
     // String treatmentScheduleList_string;
     @CommandLine.Option(names = { "-nTSteps", "--nTSteps"}, description="Number of time steps to run for.")
@@ -100,7 +100,7 @@ public class Model implements Runnable {
             //         deathRate_S, deathRate_R, drugEffect_div_S, drugEffect_div_R};
             
             paramArr = new double[]{wtDivProb,resDivProb,nTSteps,dieProb,localFreq};
-            myModel = new Grid(xDim, yDim, paramArr);
+            myModel = new Grid(xDim, yDim, paramArr, dt);
 
             // Set the random number seed. Behaviour depends no whether this is a single run or part of a series of nReplicate runs. By default will assign every replicate the value ```seed=replicateId```
             if (seed != -1) {

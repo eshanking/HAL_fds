@@ -48,6 +48,12 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
         return g_frac;
     }
 
+    public double fdsModel(double frac, double g_100, double alpha_t, double beta_t){
+        double g_0 = (g_100 * (1 + alpha_t) + beta_t); // Maximally moderated growth (0% frac)
+        double g_frac = frac * g_100 + (1 - frac) * g_0; // Growth rate (fraction)
+        return g_frac;
+    }
+
     public double FreqDepFitness(){
         // returns the fitness as a function of cell type and local frequency
         float freq = GetNeighborhood();
@@ -72,6 +78,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     public int nReplicates = 1;
     int nTSteps = 1000;
     double dieProb = 0.01;
+    double dt = 1; // time step in hours
 
     double[] resGameParams = new double[]{0.1727,-0.00083}; // alpha, beta for BRAF/parental game
     double[] wtGameParams = new double[]{-0.0783,0.0020}; // alpha, beta for BRAF/parental game
@@ -102,9 +109,10 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
         super(100,100,Cell.class);
     }
 
-    public Grid(int x, int y , double[] paramArr){
+    public Grid(int x, int y , double[] paramArr, double dt){
         super(x,y,Cell.class);
         SetParameters(paramArr);
+        this.dt = dt;
     }
 
     // Function used as part of SerializableModel to allow saving the model's state so that I can restart
@@ -358,7 +366,31 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
         // return new double[] {tIdx, tIdx, cellCountsArr[0], cellCountsArr[1], Util.ArraySum(cellCountsArr),
         //         currDrugConcentration, divisionRate_S, divisionRate_R, movementRate_S, movementRate_R,
         //         deathRate_S, deathRate_R, drugEffect_div_S, drugEffect_div_R, dt};
-        return new double[] {tIdx, tIdx, Pop()-countResistant, countResistant, Pop()};
+        if (localFreq == false) {
+            // compute global frequency
+            
+            double resFreq = (double) countResistant / (double) Pop();
+            int agentIndx = 0;
+            
+            // get an example cell
+
+            Cell c = (Cell) this.GetAgent(agentIndx);
+
+            while (c == null) {
+                agentIndx++;
+                c = this.GetAgent(agentIndx);
+            }
+            // compute resistant fitness
+            double resFitness = c.fdsModel(resFreq, resDivProb, resGameParams[0], resGameParams[1]);
+            // compute wildtype fitness
+            double wtFitness = c.fdsModel(1-resFreq, wtDivProb, wtGameParams[0], wtGameParams[1]);
+
+            return new double[] {tIdx, tIdx*dt, Pop()-countResistant, countResistant, Pop(),dt,
+            resFreq, resFitness, wtFitness};
+        }
+        else{
+            return new double[] {tIdx, tIdx*dt, Pop()-countResistant, countResistant, Pop(),dt};
+        }
     }
 
     public void SaveTumourImage(int currTimeIdx) {
