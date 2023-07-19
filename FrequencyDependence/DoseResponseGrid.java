@@ -23,25 +23,35 @@ import HAL.Interfaces.SerializableModel;
 
 class Source extends AgentSQ2Dunstackable<DoseResponseGrid>{
     double conc;
-    void Init(int conc){
+    double xPos;
+    double yPos;
+
+    public Source(double conc, int x, int y) {
+        super();
+        Init(conc, x, y);
+    }
+
+    void Init(double conc,int x, int y){
         this.conc=conc;
+        this.xPos=x;
+        this.yPos=y;
     }
     void Reaction(){
-        G.diff.Set(Isq(),conc);
+        G.diff.Set(xPos,yPos,conc);
     }
 }
 
-class DiffusionGrid extends PDEGrid2D<Source>{
-    public static int SRC=RGB(0,1,0);
-    PDEGrid2D diff;
+// class DiffusionGrid extends PDEGrid2D<Source>{
+//     public static int SRC=RGB(0,1,0);
+//     PDEGrid2D diff;
 
-    public DiffusionGrid(int x, int y) {
-        super(x, y, true, true);
-    }
+//     public DiffusionGrid(int x, int y) {
+//         super(x, y, true, true);
+//     }
 
-}
+// }
 
-class Cell extends AgentSQ2Dunstackable<Grid> {
+class Cell extends AgentSQ2Dunstackable<DoseResponseGrid> {
     int resistance; // 0 = sensitive, 1 = resistant
     double alpha;
     double beta;
@@ -53,6 +63,9 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
 
     public float GetNeighborhood() {
         // get the proportion of cells of the same type in the neighborhood
+        // get the type of G
+
+        // System.out.println(G.getClass().getSimpleName());
         if (G.localFreq == false){
             // calculate the global frequency
             if (this.resistance == 1){
@@ -95,6 +108,17 @@ class Cell extends AgentSQ2Dunstackable<Grid> {
 
 public class DoseResponseGrid extends AgentGrid2D<Cell> implements SerializableModel{
     
+    // diffusion grid
+    PDEGrid2D diff;
+    Source src;
+    double[] srcConc = new double[]{1, 1}; 
+    int[] srcX = new int[]{50, 50};
+    int[] srcY = new int[]{25, 75};
+    Source[] srcList = new Source[srcX.length];
+    double diffRate = 0.1;
+    //
+    int xDim = 100;
+    int yDim = 100; 
     int[] divHood = Util.VonNeumannHood(false);
     int[] freqHood = Util.VonNeumannHood(true); // include the current cell when calculating the local frequency 
     public final static int RESISTANT = RGB(1, 1, 0), SENSITIVE = RGB(0, 0, 1);
@@ -186,6 +210,14 @@ public class DoseResponseGrid extends AgentGrid2D<Cell> implements SerializableM
         this.wtGameParams = wtGameParams;
     }
 
+    public void StepPDEGrid() {
+        for (Source src : srcList) {
+            src.Reaction();
+        }
+        diff.Diffusion(diffRate);
+        diff.Update();
+    }
+
     public void StepCells() {
         int currPos;
 
@@ -257,17 +289,21 @@ public class DoseResponseGrid extends AgentGrid2D<Cell> implements SerializableM
     //     }
     
     public static void main(String[] args) {
+        System.out.println("Here!");
         int x=100;
         int y=100;
         int timesteps=500;
+        GridWindow visCells=new GridWindow(x,y,10,true,null,false);
+        GridWindow visDiff=new GridWindow(x,y,10);
         // double dieProb=0.01;
     
-        GridWindow win = new GridWindow(x,y,10);
-        Grid model = new Grid(x,y);
+        // GridWindow win = new GridWindow(x,y,10);
+        DoseResponseGrid model = new DoseResponseGrid(x,y);
 
         // initialize model
         // model.NewAgentSQ(model.xDim/2,model.yDim/2);
         model.InitTumor(10, 0.1);
+        model.InitPDEGrid();
 
         // get the number of resistant cells in the tumor
         model.countResistant = 0;
@@ -280,9 +316,11 @@ public class DoseResponseGrid extends AgentGrid2D<Cell> implements SerializableM
         for (int i = 0; i < timesteps; i++) {
             // model step
             model.StepCells();
+            model.StepPDEGrid();
             // draw
             // model.DrawModel(win);
-            win.TickPause(10);
+            model.Draw(visCells,visDiff);
+            visCells.TickPause(10);
             
         }
     }
@@ -325,6 +363,15 @@ public class DoseResponseGrid extends AgentGrid2D<Cell> implements SerializableM
         }
     }
 
+    public void InitPDEGrid() {
+        diff = new PDEGrid2D(xDim, yDim);
+        // initialize sources
+        for (int i = 0; i < srcX.length; i++) {
+            Source src = new Source(srcConc[i], srcX[i], srcY[i]);
+            srcList[i] = src;
+        }
+    }
+
     public void Run() {
     // Initialise visualisation window
         UIGrid currVis = new UIGrid(xDim, yDim, scaleFactor, visualiseB); // For head-less run
@@ -343,6 +390,8 @@ public class DoseResponseGrid extends AgentGrid2D<Cell> implements SerializableM
             // }            
             // PrintStatus(0);
             InitTumor(initRadius, initResistantProp);
+            // initialize the diffusion grid
+            
             if (cellCountLogFile==null && cellCountLogFileName!=null) {InitialiseCellLog(this.cellCountLogFileName);}
 
             for (Cell c : this) {
@@ -521,5 +570,14 @@ public class DoseResponseGrid extends AgentGrid2D<Cell> implements SerializableM
         }
         if (vis!=null) {vis = null;}
         SaveState(this,stateFileName);
+    }
+    public void Draw(UIGrid visSrcSinks, UIGrid visDiff){
+        for (Source srcOrSink : srcList) {
+            visSrcSinks.SetPix(srcOrSink.Isq(),RGB(0,1,0));//draw sources and sinks
+        }
+        for (int i = 0; i < length; i++) {//length of the Grid
+            //visDiff.SetPix(i,SetAlpha(HeatMapRGB(diff.Get(i)*4),diff.Get(i)*4));
+            visDiff.SetPix(i,HeatMapRGB(diff.Get(i)*4));
+        }
     }
 }

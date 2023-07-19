@@ -26,10 +26,12 @@ public class PDEexample extends AgentGrid2D<SrcOrSink> {
     public static int SRC=RGB(0,1,0),SINK=RGB(0,1,1);
     PDEGrid2D diff;
     Rand rn=new Rand();
+
     public PDEexample(int x, int y) {
         super(x, y, SrcOrSink.class,true,true);
         diff=new PDEGrid2D(x,y);//we add a PDEGrid to store the concentration of our diffusible
     }
+    
     public void Setup(int nSinks,int sinkDist){
         for (int x = xDim/2; x < xDim/2+3; x++) {
             for (int y = yDim/2; y < yDim/2+3; y++) {
