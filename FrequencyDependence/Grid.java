@@ -358,6 +358,7 @@ public class Grid extends AgentGrid2D<Cell> implements SerializableModel{
     // ------------------------------------------------------------------------------------------------------------
 
     public void InitialiseCellLog(String cellCountLogFileName) {
+        System.out.println(cellCountLogFileName);
         cellCountLogFile = new FileIO(cellCountLogFileName, "w");
         WriteLogFileHeader();
         this.cellCountLogFileName = cellCountLogFileName;

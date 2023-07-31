@@ -84,6 +84,7 @@ public class FileIO {
             BufferedWriter writer = null;
             DataOutputStream writerBin = null;
             DataInputStream readerBin = null;
+            // System.out.println(ReadWriteAppend);
             try {
                 if (ReadWriteAppend == 'r') {
                     if (this.mode=='b') {
@@ -96,6 +97,7 @@ public class FileIO {
                     if (this.mode=='b') {
                         writerBin = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileName, appendOut)));
                     } else {
+                        // System.out.println("here");
                         writer = new BufferedWriter(new FileWriter(fileName, appendOut));
                     }
                 } else {
